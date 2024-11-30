@@ -56,13 +56,23 @@ class Pelota:
             if cambio_random == 0:
                 cambio_random = random.randint(-1, 1)
             else:
-                self.x_change = cambio_random
-                self.y_change = cambio_random
+                if cambio_random == -1:
+                    self.x_change = -0.7
+                    self.y_change = -0.7
+                else:
+                    self.x_change = 0.7
+                    self.y_change = 0.7
+
 
 
 def es_colision(player_x, player_y, pelota_x, pelota_y):
-    distancia = math.sqrt(math.pow((player_x - pelota_x), 2) + math.pow((player_y - pelota_y), 2)) # Distancia entre dos puntos
-    return distancia <= 50 # Valor fijo de la distancia maxima o lo suficientemente cerca para considerarlo una colision
+    #distancia = math.sqrt(math.pow((player_x - pelota_x), 2) + math.pow((player_y - pelota_y), 2)) # Distancia entre dos puntos
+    #return distancia <= 50 # Valor fijo de la distancia maxima o lo suficientemente cerca para considerarlo una colision
+
+    # Comprobar si la pelota está dentro del área de la paleta en X y Y
+    if player_x < pelota_x + 20 < player_x + 20 and player_y < pelota_y + 20 < player_y + 100:
+        return True
+    return False
 
 def game_over_text_1():
     victoria_text = victory_font.render("VICTORIA!" , True ,(0,204,0))
@@ -78,29 +88,37 @@ def game_over_text_2():
 
 
 
+# Fondo del juego.
+fondo = pygame.image.load("fondo.png")
 # Puntuacion inicial , fuente y victoria
 score1 = 0
 score2 = 0
 font = pygame.font.Font(None, 150)
-player_font = pygame.font.Font(None,64)
-victory_font = pygame.font.Font(None,126)
+player_font = pygame.font.Font(None, 64)
+victory_font = pygame.font.Font(None, 126)
 # Creo el jugador
 player1 = Player(280, 100)
 player2 = Player(280, 700)
 # Creo la pelota
 speed = 0.7
 pelota = Pelota(speed)
+# Cargar Sonidos
+punto = pygame.mixer.Sound("punto.mp3")
+raqueta = pygame.mixer.Sound("raqueta.mp3")
+victoria = pygame.mixer.Sound("victoria.mp3")
 
 running = True
 while running:
-    screen.fill((0, 0, 0)) #Fondo Negro 
+    screen.blit(fondo, (0, 0)) #Fondo Negro 
 
     if score1 == 10:
+        pygame.mixer.Sound.play(victoria)
         game_over_text_1()
         pygame.display.flip()
         pygame.time.delay(3000)
         running = False
     elif score2 == 10:
+        pygame.mixer.Sound.play(victoria)
         game_over_text_2()
         pygame.display.flip()
         pygame.time.delay(3000)
@@ -123,7 +141,6 @@ while running:
             elif event.key == pygame.K_r:
                 score1 = 0
                 score2 = 0
-                speed = 4
                 pelota.reset_posision()
                 player1.reset_posision(280, 100)
                 player2.reset_posision(280, 700)
@@ -145,31 +162,45 @@ while running:
     pelota.move()
     pelota.draw()
 
-    if es_colision(pelota.x, pelota.y, player1.x -5, player1.y + 45) or es_colision(pelota.x, pelota.y, player2.x -5 , player2.y + 45):
-        # Calcular la posición relativa en el eje Y donde golpea la pelota
-        if pelota.y > player1.y and pelota.y < player1.y + 100:  # Golpea la paleta
-            # Calcular la diferencia de posición y usarla para modificar la dirección
+    if es_colision(player1.x, player1.y, pelota.x, pelota.y):
+        pygame.mixer.Sound.play(raqueta)
+    # Si la pelota colisiona con la paleta del jugador 1
+        if pelota.y > player1.y and pelota.y < player1.y + 100:  # Golpeó la paleta
+        # Calcular la diferencia de posición con el centro de la paleta
             medio_paleta = (pelota.y - (player1.y + 50)) / 50  # 50 es el centro de la paleta
-            pelota.x_change *= -1  # Invertir dirección X
-            pelota.y_change += medio_paleta * 0.5  # Cambiar ligeramente la dirección en Y
-        if pelota.y > player2.y and pelota.y < player2.y + 100:  # Golpea la paleta
-            # Calcular la diferencia de posición y usarla para modificar la dirección
+            pelota.x_change *= -1  # Invertir la dirección en X
+            pelota.y_change += medio_paleta * 0.5  # Ajustar la dirección en Y, según dónde golpeó la paleta
+        # Asegurarse de que la pelota no se mueva dentro de la paleta
+        if pelota.x <= player1.x + 20:
+            pelota.x = player1.x + 20  # Evitar que la pelota quede "pegada" al borde de la paleta
+
+    if es_colision(player2.x, player2.y, pelota.x, pelota.y):
+        pygame.mixer.Sound.play(raqueta)
+    # Si la pelota colisiona con la paleta del jugador 2
+        if pelota.y > player2.y and pelota.y < player2.y + 100:  # Golpeó la paleta
+        # Calcular la diferencia de posición con el centro de la paleta
             medio_paleta = (pelota.y - (player2.y + 50)) / 50  # 50 es el centro de la paleta
-            pelota.x_change *= -1  # Invertir dirección X
-            pelota.y_change += medio_paleta * 0.5  # Cambiar ligeramente la dirección en Y
+            pelota.x_change *= -1  # Invertir la dirección en X
+            pelota.y_change += medio_paleta *0.5  # Ajustar la dirección en Y, según dónde golpeó la paleta
+        # Asegurarse de que la pelota no se mueva dentro de la paleta
+        if pelota.x >= player2.x - 20:
+            pelota.x = player2.x - 20  # Evitar que la pelota quede "pegada" al borde de la paleta
 
     if not es_colision(pelota.x, pelota.y, player1.x, player1.y):
         if pelota.x < 90:
+            pygame.mixer.Sound.play(punto)
             score2 +=1
             pelota.reset_posision()
     if not es_colision(pelota.x, pelota.y, player2.x, player2.y):
         if pelota.x > 710:
+            pygame.mixer.Sound.play(punto)
             score1 += 1
             pelota.reset_posision()
-    print(speed)
+    print(pelota.x_change)
+    print(pelota.y_change)
     # Mostar la puntuacion en pantalla
     score_text1 = font.render(f"{score1}", True, (255, 255, 255))
-    screen.blit(score_text1, (10, 10))
+    screen.blit(score_text1, (85, 10))
     score_text2 = font.render(f"{score2}", True, (255, 255, 255))
     screen.blit(score_text2, (676, 10))
 
