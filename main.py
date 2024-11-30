@@ -50,10 +50,14 @@ class Pelota:
             self.y_change *= -1 # Cambio de direcion opuesta
     
     def reset_posision(self):
+            cambio_random = random.randint(-1, 1)
             self.x = 400
             self.y = 300
-            self.x_change = speed
-            self.y_change = speed
+            if cambio_random == 0:
+                cambio_random = random.randint(-1, 1)
+            else:
+                self.x_change = cambio_random
+                self.y_change = cambio_random
 
 
 def es_colision(player_x, player_y, pelota_x, pelota_y):
@@ -84,7 +88,7 @@ victory_font = pygame.font.Font(None,126)
 player1 = Player(280, 100)
 player2 = Player(280, 700)
 # Creo la pelota
-speed = 0.5
+speed = 0.7
 pelota = Pelota(speed)
 
 running = True
@@ -101,7 +105,6 @@ while running:
         pygame.display.flip()
         pygame.time.delay(3000)
         running = False
-    
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -120,7 +123,7 @@ while running:
             elif event.key == pygame.K_r:
                 score1 = 0
                 score2 = 0
-                speed = 0.5
+                speed = 4
                 pelota.reset_posision()
                 player1.reset_posision(280, 100)
                 player2.reset_posision(280, 700)
@@ -142,20 +145,26 @@ while running:
     pelota.move()
     pelota.draw()
 
-    if es_colision(pelota.x, pelota.y, player1.x -5, player1.y + 40) or es_colision(pelota.x, pelota.y, player2.x -5 , player2.y + 40):
-        pelota.x_change *= -1  # Cambiar la dirección en el eje X
+    if es_colision(pelota.x, pelota.y, player1.x -5, player1.y + 45) or es_colision(pelota.x, pelota.y, player2.x -5 , player2.y + 45):
+        # Calcular la posición relativa en el eje Y donde golpea la pelota
+        if pelota.y > player1.y and pelota.y < player1.y + 100:  # Golpea la paleta
+            # Calcular la diferencia de posición y usarla para modificar la dirección
+            medio_paleta = (pelota.y - (player1.y + 50)) / 50  # 50 es el centro de la paleta
+            pelota.x_change *= -1  # Invertir dirección X
+            pelota.y_change += medio_paleta * 0.5  # Cambiar ligeramente la dirección en Y
+        if pelota.y > player2.y and pelota.y < player2.y + 100:  # Golpea la paleta
+            # Calcular la diferencia de posición y usarla para modificar la dirección
+            medio_paleta = (pelota.y - (player2.y + 50)) / 50  # 50 es el centro de la paleta
+            pelota.x_change *= -1  # Invertir dirección X
+            pelota.y_change += medio_paleta * 0.5  # Cambiar ligeramente la dirección en Y
 
     if not es_colision(pelota.x, pelota.y, player1.x, player1.y):
         if pelota.x < 90:
             score2 +=1
-            if score1 % 2 == 0:
-                speed += 0.2
             pelota.reset_posision()
     if not es_colision(pelota.x, pelota.y, player2.x, player2.y):
         if pelota.x > 710:
             score1 += 1
-            if score2 % 2 == 0:
-                speed += 0.1
             pelota.reset_posision()
     print(speed)
     # Mostar la puntuacion en pantalla
@@ -163,8 +172,6 @@ while running:
     screen.blit(score_text1, (10, 10))
     score_text2 = font.render(f"{score2}", True, (255, 255, 255))
     screen.blit(score_text2, (676, 10))
-    print(score1)
-    print(score2)
 
 
     pygame.display.flip()
