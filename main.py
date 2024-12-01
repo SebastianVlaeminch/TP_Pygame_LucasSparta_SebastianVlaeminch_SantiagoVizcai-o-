@@ -196,8 +196,6 @@ while running:
             pygame.mixer.Sound.play(punto)
             score1 += 1
             pelota.reset_posision()
-    print(pelota.x_change)
-    print(pelota.y_change)
     # Mostar la puntuacion en pantalla
     score_text1 = font.render(f"{score1}", True, (255, 255, 255))
     screen.blit(score_text1, (85, 10))
